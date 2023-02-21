@@ -29,37 +29,108 @@ export const authOptions: NextAuthOptions = {
       },
     }),
     */
-    FacebookProvider({
-      clientId: process.env.FACEBOOK_ID,
-      clientSecret: process.env.FACEBOOK_SECRET,
-    }),
-    GithubProvider({
-      clientId: process.env.GITHUB_ID,
-      clientSecret: process.env.GITHUB_SECRET,
-    }),
-    GoogleProvider({
-      clientId: process.env.GOOGLE_ID,
-      clientSecret: process.env.GOOGLE_SECRET,
-    }),
-    TwitterProvider({
-      clientId: process.env.TWITTER_ID,
-      clientSecret: process.env.TWITTER_SECRET,
-    }),
-    Auth0Provider({
-      clientId: process.env.AUTH0_ID,
-      clientSecret: process.env.AUTH0_SECRET,
-      issuer: process.env.AUTH0_ISSUER,
-    }),
+    // FacebookProvider({
+    //   clientId: process.env.FACEBOOK_ID,
+    //   clientSecret: process.env.FACEBOOK_SECRET,
+    // }),
+    // GithubProvider({
+    //   clientId: process.env.GITHUB_ID,
+    //   clientSecret: process.env.GITHUB_SECRET,
+    // }),
+    // GoogleProvider({
+    //   clientId: process.env.GOOGLE_ID,
+    //   clientSecret: process.env.GOOGLE_SECRET,
+    // }),
+    // TwitterProvider({
+    //   clientId: process.env.TWITTER_ID,
+    //   clientSecret: process.env.TWITTER_SECRET,
+    // }),
+    // Auth0Provider({
+    //   clientId: process.env.AUTH0_ID,
+    //   clientSecret: process.env.AUTH0_SECRET,
+    //   issuer: process.env.AUTH0_ISSUER,
+    // }),
+    {
+      id: "tinkoff",
+      name: "Tinkoff",
+      type: "oauth",
+      // version: "2.0",
+      authorization: {
+        url: "https://id.tinkoff.ru/auth/authorize",
+        params: { response_type: "code",  scope:"" }, //scope: "openid profile phone email opensme/individual/passport/get" 
+      },
+      token: {
+        url: "https://id.tinkoff.ru/auth/token",
+        params: { grant_type: "authorization_code" }
+      },
+      userinfo: {
+        url: "https://id.tinkoff.ru/userinfo/userinfo",
+        async request({ client, tokens }) {
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+          //const profile = await client.userinfo(tokens.access_token!)
+            const options = {
+              method: 'POST',
+              headers:{
+                'Authorization': `Bearer ${tokens.access_token}`,
+                'Content-Type': 'application/x-www-form-urlencoded'
+              },    
+              body: new URLSearchParams({
+                  'client_id': process.env.TINKOFF_ID,
+                  'client_secret': process.env.TINKOFF_SECRET,
+              })
+            };
+            console.log(options, tokens);
+            const res = await fetch("https://id.tinkoff.ru/userinfo/userinfo", options);
+  
+            if (!res.ok) {
+              const msg = await res.text();
+              console.log('error', res, res.headers, msg);
+              throw new Error(msg);
+            }
+            const profile = await res.json();
+            return profile;
+          }
+      },
+      checks: ["pkce", "state"],
+      idToken: true,
+      issuer: "https://id.tinkoff.ru/",
+      //https://github.com/nextauthjs/next-auth/issues/3559
+      client: {
+        // authorization_signed_response_alg: 'HS256',
+        id_token_signed_response_alg: 'HS256'
+     },
+     async profile(profile, tokens) {
+      console.log('profile!!!!', profile)
+        // You can use the tokens, in case you want to fetch more profile information
+        // For example several OAuth providers do not return email by default.
+        // Depending on your provider, will have tokens like `access_token`, `id_token` and or `refresh_token`
+        return profile;
+      },
+      clientId: process.env.TINKOFF_ID,
+      clientSecret: process.env.TINKOFF_SECRET
+
+    }
   ],
   theme: {
     colorScheme: "light",
   },
+  debug: true,
   callbacks: {
     async jwt({ token }) {
+      console.log('debug token:', token);
       token.userRole = "admin"
       return token
     },
   },
+  events: {
+    async signIn(message) { console.log("signIn", message) },
+    async signOut(message) { console.log("signOut", message) },
+    async createUser(message) { console.log("createUser", message) },
+    async updateUser(message) { console.log("updateUser", message) },
+    async linkAccount(message) { console.log("linkAccount", message) },
+    async session(message) { console.log("session", message) },
+  },
+
 }
 
 export default NextAuth(authOptions)
