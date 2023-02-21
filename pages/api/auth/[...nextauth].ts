@@ -92,11 +92,11 @@ export const authOptions: NextAuthOptions = {
           }
       },
       checks: ["pkce", "state"],
-      idToken: true,
+      // idToken: true,
       issuer: "https://id.tinkoff.ru/",
       //https://github.com/nextauthjs/next-auth/issues/3559
       client: {
-        // authorization_signed_response_alg: 'HS256',
+        authorization_signed_response_alg: 'HS256',
         id_token_signed_response_alg: 'HS256'
      },
      async profile(profile, tokens) {
@@ -130,7 +130,12 @@ export const authOptions: NextAuthOptions = {
     async linkAccount(message) { console.log("linkAccount", message) },
     async session(message) { console.log("session", message) },
   },
-
+  jwt: {
+    // signingKey: {"kty":"oct","kid":"1I83zCTA1TuMrzPT4WXhGgvGSz9lMlqmnSrAVtopdOw","alg":"HS256","k":"Apr34khcVgeQkQd-5_gKZtHE1S2kMF_LVk8YNjTbCSo"},
+    // verificationOptions: {
+    //   algorithms: ["HS256"]
+    // }
+  }
 }
 
 export default NextAuth(authOptions)
