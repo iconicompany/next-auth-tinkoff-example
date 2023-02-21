@@ -7,49 +7,34 @@ import Auth0Provider from "next-auth/providers/auth0"
 // import AppleProvider from "next-auth/providers/apple"
 // import EmailProvider from "next-auth/providers/email"
 
+async function getProfile({access_token, client_id,client_secret}) {
+  const options = {
+    method: 'POST',
+    headers:{
+      'Authorization': `Bearer ${access_token}`,
+      'Content-Type': 'application/x-www-form-urlencoded'
+    },    
+    body: new URLSearchParams({
+        client_id,
+        client_secret
+    })
+  };
+  // console.log(options);
+  const res = await fetch("https://id.tinkoff.ru/userinfo/userinfo", options);
+
+  if (!res.ok) {
+    const msg = await res.text();
+    console.log('error', res, res.headers, msg);
+    throw new Error(msg);
+  }
+  const profile = await res.json();
+  return profile;
+}
 // For more information on each option (and a full list of options) go to
 // https://next-auth.js.org/configuration/options
 export const authOptions: NextAuthOptions = {
   // https://next-auth.js.org/configuration/providers/oauth
   providers: [
-    /* EmailProvider({
-         server: process.env.EMAIL_SERVER,
-         from: process.env.EMAIL_FROM,
-       }),
-    // Temporarily removing the Apple provider from the demo site as the
-    // callback URL for it needs updating due to Vercel changing domains
-
-    Providers.Apple({
-      clientId: process.env.APPLE_ID,
-      clientSecret: {
-        appleId: process.env.APPLE_ID,
-        teamId: process.env.APPLE_TEAM_ID,
-        privateKey: process.env.APPLE_PRIVATE_KEY,
-        keyId: process.env.APPLE_KEY_ID,
-      },
-    }),
-    */
-    // FacebookProvider({
-    //   clientId: process.env.FACEBOOK_ID,
-    //   clientSecret: process.env.FACEBOOK_SECRET,
-    // }),
-    // GithubProvider({
-    //   clientId: process.env.GITHUB_ID,
-    //   clientSecret: process.env.GITHUB_SECRET,
-    // }),
-    // GoogleProvider({
-    //   clientId: process.env.GOOGLE_ID,
-    //   clientSecret: process.env.GOOGLE_SECRET,
-    // }),
-    // TwitterProvider({
-    //   clientId: process.env.TWITTER_ID,
-    //   clientSecret: process.env.TWITTER_SECRET,
-    // }),
-    // Auth0Provider({
-    //   clientId: process.env.AUTH0_ID,
-    //   clientSecret: process.env.AUTH0_SECRET,
-    //   issuer: process.env.AUTH0_ISSUER,
-    // }),
     {
       id: "tinkoff",
       name: "Tinkoff",
@@ -66,29 +51,11 @@ export const authOptions: NextAuthOptions = {
       userinfo: {
         url: "https://id.tinkoff.ru/userinfo/userinfo",
         async request({ client, tokens }) {
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-          //const profile = await client.userinfo(tokens.access_token!)
-            const options = {
-              method: 'POST',
-              headers:{
-                'Authorization': `Bearer ${tokens.access_token}`,
-                'Content-Type': 'application/x-www-form-urlencoded'
-              },    
-              body: new URLSearchParams({
-                  'client_id': process.env.TINKOFF_ID,
-                  'client_secret': process.env.TINKOFF_SECRET,
-              })
-            };
-            console.log(options, tokens);
-            const res = await fetch("https://id.tinkoff.ru/userinfo/userinfo", options);
-  
-            if (!res.ok) {
-              const msg = await res.text();
-              console.log('error', res, res.headers, msg);
-              throw new Error(msg);
-            }
-            const profile = await res.json();
-            return profile;
+          console.log('client!!!', client);
+          const profile = await getProfile({access_token: tokens.access_token,
+          client_id: client.client_id,
+          client_secret: client.client_secret}); 
+          return profile;
           }
       },
       checks: ["pkce", "state"],
@@ -100,7 +67,9 @@ export const authOptions: NextAuthOptions = {
         id_token_signed_response_alg: 'HS256'
      },
      async profile(profile, tokens) {
+        
       console.log('profile!!!!', profile)
+      profile.id=profile.sub
         // You can use the tokens, in case you want to fetch more profile information
         // For example several OAuth providers do not return email by default.
         // Depending on your provider, will have tokens like `access_token`, `id_token` and or `refresh_token`
