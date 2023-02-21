@@ -55,42 +55,51 @@ export const authOptions: NextAuthOptions = {
       name: "Tinkoff",
       type: "oauth",
       // version: "2.0",
-      authorization: {
-        url: "https://id.tinkoff.ru/auth/authorize",
-        params: { response_type: "code",  scope:"" }, //scope: "openid profile phone email opensme/individual/passport/get" 
+
+      scope: "",
+      params: {
+        response_type: "code"
+        //  grant_type: "authorization_code"
       },
-      token: {
-        url: "https://id.tinkoff.ru/auth/token",
-        params: { grant_type: "authorization_code" }
-      },
-      userinfo: {
-        url: "https://id.tinkoff.ru/userinfo/userinfo",
-        async request({ client, tokens }) {
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-          //const profile = await client.userinfo(tokens.access_token!)
-            const options = {
-              method: 'POST',
-              headers:{
-                'Authorization': `Bearer ${tokens.access_token}`,
-                'Content-Type': 'application/x-www-form-urlencoded'
-              },    
-              body: new URLSearchParams({
-                  'client_id': process.env.TINKOFF_ID,
-                  'client_secret': process.env.TINKOFF_SECRET,
-              })
-            };
-            console.log(options, tokens);
-            const res = await fetch("https://id.tinkoff.ru/userinfo/userinfo", options);
+      accessTokenUrl: "https://id.tinkoff.ru/auth/token",
+      requestTokenUrl: "https://id.tinkoff.ru/auth/token",
+      authorizationUrl: "https://id.tinkoff.ru/auth/authorize?response_type=code",
+      profileUrl: "https://www.googleapis.com/oauth2/v1/userinfo?alt=json",
+      
+      // authorization: {
+      //   url: "https://id.tinkoff.ru/auth/authorize",
+      //   params: { response_type: "code",  scope:"" }, //scope: "openid profile phone email opensme/individual/passport/get" 
+      // },
+      // token: {
+      //   url: "https://id.tinkoff.ru/auth/token",
+      //   params: { grant_type: "authorization_code" }
+      // },
+      // userinfo: {
+      //   url: "https://id.tinkoff.ru/userinfo/userinfo",
+      //   async request({ client, tokens }) {
+      //       const options = {
+      //         method: 'POST',
+      //         headers:{
+      //           'Authorization': `Bearer ${tokens.access_token}`,
+      //           'Content-Type': 'application/x-www-form-urlencoded'
+      //         },    
+      //         body: new URLSearchParams({
+      //             'client_id': process.env.TINKOFF_ID,
+      //             'client_secret': process.env.TINKOFF_SECRET,
+      //         })
+      //       };
+      //       console.log(options, tokens);
+      //       const res = await fetch("https://id.tinkoff.ru/userinfo/userinfo", options);
   
-            if (!res.ok) {
-              const msg = await res.text();
-              console.log('error', res, res.headers, msg);
-              throw new Error(msg);
-            }
-            const profile = await res.json();
-            return profile;
-          }
-      },
+      //       if (!res.ok) {
+      //         const msg = await res.text();
+      //         console.log('error', res, res.headers, msg);
+      //         throw new Error(msg);
+      //       }
+      //       const profile = await res.json();
+      //       return profile;
+      //     }
+      // },
       checks: ["pkce", "state"],
       idToken: true,
       issuer: "https://id.tinkoff.ru/",

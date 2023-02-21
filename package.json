@@ -18,15 +18,15 @@
     "Lluis Agusti <hi@llu.lu>"
   ],
   "dependencies": {
-    "next": "latest",
-    "next-auth": "latest",
+    "next": "^12.3.1",
+    "next-auth": "^3.29.0",
     "nodemailer": "^6",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2"
   },
   "devDependencies": {
     "@types/node": "^17",
-    "@types/react": "^18.0.15",
+    "@types/react": "^17.0.2",
     "typescript": "^4"
   }
 }
