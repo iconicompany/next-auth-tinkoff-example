@@ -1,13 +1,34 @@
 import NextAuth, { NextAuthOptions } from "next-auth"
-import GoogleProvider from "next-auth/providers/google"
-import FacebookProvider from "next-auth/providers/facebook"
-import GithubProvider from "next-auth/providers/github"
-import TwitterProvider from "next-auth/providers/twitter"
-import Auth0Provider from "next-auth/providers/auth0"
-// import AppleProvider from "next-auth/providers/apple"
-// import EmailProvider from "next-auth/providers/email"
 
-async function getProfile({access_token, client_id,client_secret}) {
+async function introspect({ client_id,client_secret}, {access_token}) {
+  // 
+  const options = {
+    method: 'POST',
+    headers:{
+      'Authorization': 'Basic ' + Buffer.from(client_id + ":" + client_secret).toString('base64'),
+      'Content-Type': 'application/x-www-form-urlencoded'
+    },    
+    body: new URLSearchParams({
+        token: access_token
+    })
+  };
+  // console.log(options);
+  const res = await fetch("https://id.tinkoff.ru/auth/introspect", options);
+  checkResponse(res);
+ 
+  const profile = await res.json();
+  return profile;
+}
+async function checkResponse(res) {
+  if (!res.ok) {
+    const msg = await res.text();
+    console.log('error', res, res.headers, msg);
+    throw new Error(msg);
+  }
+  return res;
+}
+
+async function getProfile({ client_id,client_secret}, {access_token}) {
   const options = {
     method: 'POST',
     headers:{
@@ -21,12 +42,29 @@ async function getProfile({access_token, client_id,client_secret}) {
   };
   // console.log(options);
   const res = await fetch("https://id.tinkoff.ru/userinfo/userinfo", options);
+  checkResponse(res);
+ 
+  const profile = await res.json();
+  return profile;
+}
 
-  if (!res.ok) {
-    const msg = await res.text();
-    console.log('error', res, res.headers, msg);
-    throw new Error(msg);
-  }
+async function getPassport({client_id,client_secret}, {access_token}) {
+  const options = {
+    method: 'POST',
+    headers:{
+      'Authorization': `Bearer ${access_token}`,
+      'Content-Type': 'application/x-www-form-urlencoded'
+    },    
+    body: new URLSearchParams({
+        client_id,
+        client_secret
+    })
+  };
+  // console.log(options);
+  const url = "https://business.tinkoff.ru/openapi/api/v1/individual/documents/passport?idType=PASSPORT";
+  const res = await fetch(url);
+  // const res = await fetch("https://business.tinkoff.ru/openapi/api/v1/individual/documents/passport-short", options);
+  checkResponse(res);
   const profile = await res.json();
   return profile;
 }
@@ -42,7 +80,7 @@ export const authOptions: NextAuthOptions = {
       // version: "2.0",
       authorization: {
         url: "https://id.tinkoff.ru/auth/authorize",
-        params: { response_type: "code",  scope:"" }, //scope: "openid profile phone email opensme/individual/passport/get" 
+        params: { response_type: "code",  scope:"" }, // openid profile phone email opensme/individual/passport/get opensme/individual/passport-short/get //scope: "openid profile phone email opensme/individual/passport-short/get" 
       },
       token: {
         url: "https://id.tinkoff.ru/auth/token",
@@ -51,10 +89,13 @@ export const authOptions: NextAuthOptions = {
       userinfo: {
         url: "https://id.tinkoff.ru/userinfo/userinfo",
         async request({ client, tokens }) {
-          console.log('client!!!', client);
-          const profile = await getProfile({access_token: tokens.access_token,
-          client_id: client.client_id,
-          client_secret: client.client_secret}); 
+          // const into=await introspect(client, tokens);
+          // console.log(into);
+
+          // console.log('client!!!', client);
+          const profile = await getProfile(client, tokens); 
+          const passport = await getPassport(client, tokens);
+          profile.passport =passport;
           return profile;
           }
       },
