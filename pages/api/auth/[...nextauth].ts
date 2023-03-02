@@ -14,7 +14,7 @@ async function introspect({ client_id,client_secret}, {access_token}) {
   };
   // console.log(options);
   const res = await fetch("https://id.tinkoff.ru/auth/introspect", options);
-  checkResponse(res);
+  await checkResponse(res);
  
   const profile = await res.json();
   return profile;
@@ -22,7 +22,7 @@ async function introspect({ client_id,client_secret}, {access_token}) {
 async function checkResponse(res) {
   if (!res.ok) {
     const msg = await res.text();
-    console.log('error', res, res.headers, msg);
+    console.log('error', msg);
     throw new Error(msg);
   }
   return res;
@@ -42,7 +42,7 @@ async function getProfile({ client_id,client_secret}, {access_token}) {
   };
   // console.log(options);
   const res = await fetch("https://id.tinkoff.ru/userinfo/userinfo", options);
-  checkResponse(res);
+  await checkResponse(res);
  
   const profile = await res.json();
   return profile;
@@ -50,24 +50,19 @@ async function getProfile({ client_id,client_secret}, {access_token}) {
 
 async function getPassport({client_id,client_secret}, {access_token}) {
   const options = {
-    method: 'POST',
+    method: 'GET',
     headers:{
       'Authorization': `Bearer ${access_token}`,
-      'Content-Type': 'application/x-www-form-urlencoded'
     },    
-    body: new URLSearchParams({
-        client_id,
-        client_secret
-    })
   };
-  // console.log(options);
-  const url = "https://business.tinkoff.ru/openapi/api/v1/individual/documents/passport?idType=PASSPORT";
-  const res = await fetch(url);
-  // const res = await fetch("https://business.tinkoff.ru/openapi/api/v1/individual/documents/passport-short", options);
-  checkResponse(res);
+  console.log(options);
+  const url = "https://business.tinkoff.ru/openapi/api/v1/individual/documents/passport";
+  const res = await fetch(url, options);
+  await checkResponse(res);
   const profile = await res.json();
   return profile;
 }
+
 // For more information on each option (and a full list of options) go to
 // https://next-auth.js.org/configuration/options
 export const authOptions: NextAuthOptions = {
@@ -94,6 +89,8 @@ export const authOptions: NextAuthOptions = {
 
           // console.log('client!!!', client);
           const profile = await getProfile(client, tokens); 
+          console.log(profile);
+          // const profile= {};
           const passport = await getPassport(client, tokens);
           profile.passport =passport;
           return profile;
