@@ -48,6 +48,15 @@ const scopeSettings = {
   "opensme/individual/inn/get": {
     url: "https://business.tinkoff.ru/openapi/api/v1/individual/documents/inn",
   },
+  "opensme/individual/snils/get": {
+    url: "https://business.tinkoff.ru/openapi/api/v1/individual/documents/snils"
+  },
+  "opensme/individual/addresses/get": {
+    url: "https://business.tinkoff.ru/openapi/api/v1/individual/addresses",
+  },
+  "opensme/individual/self-employed/status/get": {
+    url: "https://business.tinkoff.ru/openapi/api/v1/individual/self-employed/status"
+  }
 };
 
 async function getScopesInfo(scopes, access_token) {
