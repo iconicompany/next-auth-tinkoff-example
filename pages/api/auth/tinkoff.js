@@ -15,12 +15,9 @@ export default function TinkoffProvider(options) {
     userinfo: {
       async request({ client, tokens }) {
         const info = await introspect(client, tokens);
-        // console.log(info);
-        const profile = await getUserinfo(client, tokens);
-        if (info.scope.includes('opensme/individual/passport/get')){
-          const passport = await getPassport(tokens.access_token);
-          profile.passport = passport;
-        }
+        const userinfo = await getUserinfo(client, tokens);
+        const addinfo = await getScopesInfo(info.scope, tokens.access_token);
+        const profile = Object.assign({}, userinfo, addinfo);
         return profile;
       },
     },
@@ -41,6 +38,34 @@ export default function TinkoffProvider(options) {
     },
     options,
   };
+}
+
+const scopeSettings = {
+  "opensme/individual/passport/get": {
+    url: "https://business.tinkoff.ru/openapi/api/v1/individual/documents/passport",
+    key: "passport",
+  },
+  "opensme/individual/inn/get": {
+    url: "https://business.tinkoff.ru/openapi/api/v1/individual/documents/inn",
+  },
+};
+
+async function getScopesInfo(scopes, access_token) {
+  const result = {};
+  for (const scope of scopes) {
+    if (scopeSettings[scope]) {
+      const settings = scopeSettings[scope];
+      const data = await getInfo(settings.url, access_token);
+      if (settings.key) {
+        result[settings.key] = data;
+      } else {
+        for (const key in data) {
+          result[key] = data[key];
+        }
+      }
+    }
+  }
+  return result;
 }
 
 async function introspect({ client_id, client_secret }, { access_token }) {
@@ -83,19 +108,17 @@ async function getUserinfo({ client_id, client_secret }, { access_token }) {
 }
 
 /**
- * get passport info
+ * get passport/inn/snils/etc info
  * @param {*} access_token
  * @returns
  */
-async function getPassport(access_token) {
+async function getInfo(url, access_token) {
   const options = {
     method: "GET",
     headers: {
       Authorization: `Bearer ${access_token}`,
     },
   };
-  const url =
-    "https://business.tinkoff.ru/openapi/api/v1/individual/documents/passport";
   const res = await fetch(url, options);
   await checkResponse(res);
   const passport = await res.json();
