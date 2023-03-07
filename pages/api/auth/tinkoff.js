@@ -14,12 +14,13 @@ export default function TinkoffProvider(options) {
     },
     userinfo: {
       async request({ client, tokens }) {
-        // const info=await introspect(client, tokens);
+        const info = await introspect(client, tokens);
         // console.log(info);
         const profile = await getUserinfo(client, tokens);
-        // console.log(profile);
-        const passport = await getPassport(tokens.access_token);
-        profile.passport = passport;
+        if (info.scope.includes('opensme/individual/passport/get')){
+          const passport = await getPassport(tokens.access_token);
+          profile.passport = passport;
+        }
         return profile;
       },
     },
@@ -93,7 +94,8 @@ async function getPassport(access_token) {
       Authorization: `Bearer ${access_token}`,
     },
   };
-  ("https://business.tinkoff.ru/openapi/api/v1/individual/documents/passport");
+  const url =
+    "https://business.tinkoff.ru/openapi/api/v1/individual/documents/passport";
   const res = await fetch(url, options);
   await checkResponse(res);
   const passport = await res.json();
